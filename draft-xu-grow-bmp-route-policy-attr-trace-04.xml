@@ -1,0 +1,689 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc tocompact="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc tocindent="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<rfc category="std" docName="draft-xu-grow-bmp-route-policy-attr-trace-04"
+     ipr="trust200902">
+  <front>
+    <title abbrev="Route Policy-Attribute Trace">BGP Route Policy and
+    Attribute Trace Using BMP</title>
+
+    <author fullname="Feng Xu" initials="F. " surname="Xu">
+      <organization>Tencent</organization>
+
+      <address>
+        <postal>
+          <street/>
+
+          <city>Guangzhou</city>
+
+          <code/>
+
+          <country>China</country>
+        </postal>
+
+        <email>oliverxu@tencent.com</email>
+      </address>
+    </author>
+
+    <author fullname="Thomas Graf" initials="T." surname="Graf">
+      <organization>Swisscom</organization>
+
+      <address>
+        <postal>
+          <street>Binzring 17</street>
+
+          <city>Z&uuml;rich</city>
+
+          <region/>
+
+          <code>8045</code>
+
+          <country>Switzerland</country>
+        </postal>
+
+        <phone/>
+
+        <facsimile/>
+
+        <email>thomas.graf@swisscom.com</email>
+
+        <uri/>
+      </address>
+    </author>
+
+    <author fullname="Yunan Gu" initials="Y. " surname="Gu">
+      <organization>Huawei</organization>
+
+      <address>
+        <postal>
+          <street>Huawei Bld., No.156 Beiqing Rd.</street>
+
+          <city>Beijing</city>
+
+          <code>100095</code>
+
+          <country>China</country>
+        </postal>
+
+        <email>guyunan@huawei.com</email>
+      </address>
+    </author>
+
+    <author fullname="Shunwan Zhuang" initials="S. " surname="Zhuang">
+      <organization>Huawei</organization>
+
+      <address>
+        <postal>
+          <street>Huawei Bld., No.156 Beiqing Rd.</street>
+
+          <city>Beijing</city>
+
+          <code>100095</code>
+
+          <country>China</country>
+        </postal>
+
+        <email>zhuangshunwan@huawei.com</email>
+      </address>
+    </author>
+
+    <author fullname="Zhenbin Li" initials="Z. " surname="Li">
+      <organization>Huawei</organization>
+
+      <address>
+        <postal>
+          <street>Huawei Bld., No.156 Beiqing Rd.</street>
+
+          <city>Beijing</city>
+
+          <code>100095</code>
+
+          <country>China</country>
+        </postal>
+
+        <email>lizhenbin@huawei.com</email>
+      </address>
+    </author>
+
+    <date day="6" month="January" year="2020"/>
+
+    <abstract>
+      <t>The generation of BGP adj-rib-in, local-rib or adj-rib-out comes from
+      BGP route exchange and route policy processing. BGP Monitoring Protocol
+      (BMP) provides the monitoring of <xref target="RFC7854">BGP
+      adj-rib-in</xref>, <xref target="I-D.ietf-grow-bmp-local-rib">BGP
+      local-rib</xref> and <xref target="I-D.ietf-grow-bmp-adj-rib-out">BGP
+      adj-rib-out</xref>. By monitoring these BGP RIB's the full state of the
+      network is visible, but how route-policies affect the route propagation
+      or changes BGP attributes is still not. This document describes a method
+      of using BMP to record the trace data on how BGP routes are (not)
+      changed under the process of route policies.</t>
+    </abstract>
+
+    <note title="Requirements Language">
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+      "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+      document are to be interpreted as described in <xref
+      target="RFC2119">RFC 2119</xref>.</t>
+    </note>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+      <t>The typical processing procedure after receiving a BGP Update Message
+      at a routing device is as follows: 1. Adding the pre-policy routes into
+      the pre-policy adj-rib-in (if any); 2. Filtering the pre-policy routes
+      through inbound route policies; 3. Selecting the BGP best routes from
+      the post-policy routes; 4. Adding the selected routes into the BGP
+      local-rib; 5-a. Adding the BGP best routes from local-rib to the core
+      routing table manager for selection; 5-b. Filtering the routes from BGP
+      local-rib through outbound route policies w.r.t. per peer or peer
+      groups; 6. Sending the BGP adj-rib-out to the target peer or peer
+      groups. Details may vary by vendors. The BGP Monitoring Protocol (BMP)
+      can be utilized to monitor BGP routes in forms of adj-rib-in, local-rib
+      and adj-rib-out. However, the complete procedure from inbound to
+      outbound policy processing, including other policies, e.g., route
+      redistribution, route selection and so on, is currently unobserved. For
+      example, there are 10 policy items (or nodes) configured under one
+      outbound route policy per a specific peer. By collecting the local-rib
+      and adj-rib-out through BMP, the operator finds that the outbound policy
+      didn't work as expected. However, it's hard to distinguish which one of
+      the 10 policy items/nodes is responsible for the failure.</t>
+
+      <section title="BGP Route Policy and Attribute Trace Overview">
+        <t>This document describes a method that records and reports how each
+        policy item/node processes the routes (e.g., changes the route
+        attribute). Each policy item/node processing is called an event
+        thereafter in this document. Compared with conventional BGP rib entry,
+        which consists of prefix/mask, route attributes, e.g., next hop, MED,
+        local preference, AS path, and so on, the event record discussed in
+        this document includes extra information, such as event index,
+        timestamp, policy information, and so on. For example, if a route is
+        processed by 5 policy items/nodes, there can be 5 event records for
+        the same prefix/mask. Each event is numbered in order of time (e.g.,
+        the time of policy execution). The policy information includes the
+        policy name and item/node ID/name so that the server/controller can
+        map to the exact policy either directly from the device or from the
+        configurations collected at the server side.</t>
+
+        <t>This document defines a new BMP message type to carry the recorded
+        policy and route data. More detailed message format is defined in
+        Section 2. The message is called the BMP Route Policy and Attribute
+        Trace Message thereafter in this document.</t>
+      </section>
+
+      <section title="Use cases">
+        <t>There are cases that a new policy is configured incorrectly, e.g.,
+        setting an incorrect community value, or policy placed in incorrect
+        order among other policies. These may result in incorrect route
+        attribute modification, best route selection mistake, or route
+        distribution mistake. With the correlated record of policy and route,
+        the server/controller is able to identify the unexpected route change
+        and its responsible policy. Considering the fact that the BGP route
+        policy impacts not only the route processing within the individual
+        device but also the route distribution to its peers, the route trace
+        data of a single device is always analyzed in correlation with such
+        data collected from its peer devices.</t>
+
+        <t>Apart from the policy validation application, the route trace data
+        can also be analyzed to discover the route propagation path within the
+        network. With the route's inbound and outbound event records collect
+        from each related device, the server is able to find the propagation
+        path hop by hop. The identified path is helpful for operators to
+        better understand its network, and thus benefiting both network
+        troubleshooting and network planning.</t>
+      </section>
+    </section>
+
+    <section title="Extension of BMP for Route Policy and Attribute Trace">
+      <t/>
+
+      <section title="Common Header">
+        <t>This document defines a new BMP message type to carry the Route
+        Policy and Attribute Trace data. <list style="symbols">
+            <t>Type = TBD: Route Policy and Attribute Trace Message</t>
+          </list></t>
+
+        <t>The new defined message type is indicated in the Message Type field
+        of the BMP common header.</t>
+      </section>
+
+      <section title="Per Peer Header">
+        <t>The Route Policy and Attribute Trace Message is not per peer based,
+        thus it does not require the Per Peer Header.</t>
+      </section>
+
+      <section title="Route Policy and Attribute Trace Message">
+        <t>The Route Policy and Attribute Trace Message format is defined as
+        follows:</t>
+
+        <t><figure>
+            <artwork align="center"><![CDATA[+---------------------------------------------------------------+
+|V|                          Reserved                           |
++---------------------------------------------------------------+
+|                        Route Distinguisher                    |
++---------------------------------------------------------------+
+|                          Prefix length                        |
++---------------------------------------------------------------+
+|                              Prefix                           |
++---------------------------------------------------------------+
+|                           Route Origin                        |
++---------------------------------------------------------------+
+|                          Event count                          |
++---------------------------------------------------------------+
+|                       Total event length                      |
++---------------------------------------------------------------+
+|                            1st Event                          |
++---------------------------------------------------------------+
+|                            2nd Event                          |
++---------------------------------------------------------------+
+~                                                               ~
++                            ......                             +
+~                                                               ~
++---------------------------------------------------------------+
+|                           Last Event                          |
++---------------------------------------------------------------+
+
+  Figure 1: Route Policy and Attribute Trace Message format
+]]></artwork>
+          </figure></t>
+
+        <t><list style="symbols">
+            <t>Flags (1 Byte): The V flag indicates that the Peer address is
+            an IPv6 address. For IPv4 peers, this is set to 0.</t>
+
+            <t>Route Distinguisher (8 Bytes): indicates the route
+            distinguisher (RD) related to the route.</t>
+
+            <t>Prefix Length (1 Byte): indicates the length of the prefix.</t>
+
+            <t>Prefix (16 Bytes): indicates the monitored prefix, with mask
+            defined by Prefix Length field. It is 4 bytes long if an IPv4
+            address is carried in this field (with the 12 most significant
+            bytes zero-filled) and 16 bytes long if an IPv6 address is carried
+            in this field.</t>
+
+            <t>Route Origin (4 Bytes): indicates the BGP router ID where this
+            route is learned from. If the route is locally generated, this
+            field is zero filled.</t>
+
+            <t>Event Count (1 Byte): indicates the total number of policy
+            processing event recorded in this message.</t>
+
+            <t>Total event length (2 Byte): indicates the total length of the
+            following fields including all events, where the total number is
+            indicated by the Event Count field.</t>
+
+            <t>1 ~ Last event: indicates each event, stacked one by one in
+            order of time. The event format is further defined as follows.</t>
+          </list><figure align="center">
+            <artwork><![CDATA[+---------------------------------------------------------------+
+|                       Single event length                     |
++---------------------------------------------------------------+
+|                           Event index                         |
++---------------------------------------------------------------+
+|                       Timestamp(seconds)                      |
++---------------------------------------------------------------+
+|                       Timestamp(microseconds)                 |
++---------------------------------------------------------------+
+|                        Path Identifier                        |
++---------------------------------------------------------------+
+|                              AFI                              |
++---------------------------------------------------------------+
+|                              SAFI                             |
++---------------------------------------------------------------+
+|                          VRF/Table TLV                        |
++---------------------------------------------------------------+
+|                            Policy TLV                         |
++---------------------------------------------------------------+
+|                     Pre Policy Attribute TLV                  |
++---------------------------------------------------------------+
+|                     Post Policy Attribute TLV                 |
++---------------------------------------------------------------+
+|                            String TLV                         |
++---------------------------------------------------------------+
+
+                     Figure 2: Event format]]></artwork>
+          </figure><list style="symbols">
+            <t>Single event length (2 Byte): indicates the total length of a
+            single policy process event, including the following fields that
+            belong to this event.</t>
+
+            <t>Event index (1 Byte): indicates the sequence number of this
+            event, staring from 1 and increases by 1 for each event recorded
+            in order.</t>
+
+            <t>Timestamp (8 Bytes): indicates the time when the policy of this
+            event starts execution, expressed in seconds and microseconds
+            since midnight (zero hour), January 1, 1970 (UTC).</t>
+
+            <t>Path Identifier (4 Bytes): used to distinguish multiple BGP
+            paths for the same prefix. If there's no path ID, this field is
+            zero filled.</t>
+
+            <t>AFI (2 Bytes)/SAFI (1 Byte): indicates the AFI/SAFI of the
+            route.</t>
+
+            <t>VRF/Table TLV (Variable): indicates the VRFinformation of the
+            route. The format of the VRF/Table TLV is further defined in
+            Figure 3. The VRF/Table TLV is optional.</t>
+
+            <t>Policy TLV (Variable): indicates the ID of the route policy of
+            this event, which is user specific or vendor specific, which can
+            be used for mapping to the actual policy content. The policy
+            content data retrieval is out of the scope of this document. The
+            format of the Policy ID TLV is further defined in Figure 4. The
+            Policy ID TLV is optional.</t>
+
+            <t>Pre-policy Attribute TLV (Variable): include the BGP route
+            attributes before the policy is executed. The format of the
+            Pre-policy Attribute TLV is further defined in Figure 4. The
+            Pre-policy Attribute TLV is optional.</t>
+
+            <t>Post-policy Attribute TLV (Variable): include the BGP route
+            attributes after the policy is executed. The format of the
+            Post-policy Attribute TLV is further defined in Figure 5. The
+            Post-policy Attribute TLV is optional.</t>
+
+            <t>String TLV (Variable): leaves for future extension. The String
+            TLV is optional.</t>
+          </list></t>
+
+        <section title="VRF/Table TLV">
+          <t><figure>
+              <artwork align="center"><![CDATA[0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-------------------------------+-------------------------------+
+|          Type = TBD1          |            Length             |
++-------------------------------+-------------------------------+
+|                         VRF/Table ID                          |
++---------------------------------------------------------------+
+~                         VRF/Table Name                        ~
+|                                                               |
++---------------------------------------------------------------+
+
+                   Figure 3: VRF/Table TLV]]></artwork>
+            </figure></t>
+
+          <t><list style="symbols">
+              <t>Type = TBD1 (2 Byte): VRF/Table TLV.</t>
+
+              <t>Length (2 Byte): indicates the length of the VRF/Table name
+              field.</t>
+
+              <t>VRF/Table ID (4 Bytes): indicates the VRF or table ID of this
+              route.</t>
+
+              <t>VRF/Table name (Variable): indicates the VRF or table name of
+              this route in the format of ASCII string. The string size MUST
+              be within the range of 1 to 255 bytes.</t>
+            </list></t>
+        </section>
+
+        <section title="Policy TLV">
+          <t><figure>
+              <artwork align="center"><![CDATA[0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-------------------------------+-------------------------------+
+|          Type = TBD2          |            Length             |
++---------------+-------------------------------+---------------+
+|M|P|D|  Res.   |  Policy Count | Policy Class. |
++---------------+---------------+---------------+---------------+
+~                          Peer Address                         ~
++                                                               +
++---------------------------------------------------------------+
+|                          Peer Router ID                       |
++---------------------------------------------------------------+
+|                            Peer AS                            |
++---------------------------------------------------------------+
+~                                                               ~
++                           1st Policy          +---------------+
+|                                               |C|R|   Res.    |
++---------------------------------------------------------------+
+~                                .                              ~
++                                .                              +
+~                                .                              ~
++---------------------------------------------------------------+
+~                                                               ~
++                           Last Policy         +---------------+
+|                                               |C|R|   Res.    |
++---------------------------------------------------------------+
+
+                   Figure 4: Policy TLV
+]]></artwork>
+            </figure></t>
+
+          <t><list style="symbols">
+              <t>Type = TBD2 (2 Byte): Policy TLV.</t>
+
+              <t>Length (2 Byte): indicates the length of the Policy Value
+              field that follows it. The Policy value field includes the
+              reserved Flag Byte, Policy Count field, Policy Classification
+              field, Peer Router ID field, Peer AS field, and each Policy
+              field.</t>
+
+              <t>Flag Byte (1 Byte): the M bit (the left most bit) indicates
+              if the route in this event is matched (once or multiple times)
+              or not by any policies. "0" means no match and "1" means else
+              wise. When the M bit is set to "0", the Post Policy Attribute
+              TLV SHALL not be included in the Message. The P bit (the second
+              left bit) indicates if the matched result is Permit or Deny. "0"
+              means Deny, and "1" means Permit. When the M bit is set to "0",
+              any value of the P bit SHOULD be ignored. When the P bit is set
+              to "0", the Post Policy Attribute TLV SHALL not be included in
+              the Message. The D bit (the third left bit) indicates if there
+              exists any difference between the pre-policy attributes and the
+              post policy attributes. "0" means no difference, and "1" means
+              difference exists. When the D bit is set to "0", the Post Policy
+              Attribute TLV SHALL not be included in the Message.</t>
+
+              <t>Policy Count (1 Byte): indicates the number of policies (in
+              the format of Policy name + Item ID) carried in this event.</t>
+
+              <t>Policy Classification (1 Byte): indicates the category of the
+              policy. Currently 8 policy categories are defined: "00000000"
+              indicates the Inbound policy; "00000001" indicates the Outbound
+              policy; "00000010" indicating the Multi-protocol Redistribute
+              policy (including routes import from other protocols, like
+              ISIS/OSPF and static routes), "00000011" indicates the Cross-VRF
+              Redistribute policy (route import between VRF and global table
+              and between VRFs); "00000100" indicates VRF Import policy (e.g.,
+              an IPv4 route within a VRF transformed from a VPNv4 route),
+              "00000101" indicates VRF Export policy (e.g., a VPNv4 route
+              transformed from an IPv4 route within an VRF); "00000110"
+              indicates the Network policy (BGP network installment and
+              advertisement), "00000111" indicates the Aggregation policy;
+              "00001000" indicating the Route Withdraw (triggered by BGP
+              Update or local actions, e.g., route aggregation).
+              Specifications regarding each category can be included in the
+              String TLV. For the route update, i.e., route creation and
+              withdrawal, that is not processed by any route policy, the
+              Policy Category field is set per the route update point. In
+              addition, the Policy ID field in the Policy ID TLV SHOULD be set
+              to 0.</t>
+
+              <t><figure align="center">
+                  <artwork><![CDATA[+---------------------------------------+
+|   Value  |Policy Classification       |
++---------------------------------------+
+| 00000000 | Inbound policy             |
+| 00000001 | Outbound policy            |
+| 00000010 | Multi-protocol Redistribute|
+| 00000011 | Cross-VRF Redistribute     |
+| 00000100 | VRF import                 |
+  00000101 | VRF export                 |
+| 00000110 | Network                    |
+| 00000111 | Aggregation                |
+| 00001000 | Route Withdraw             |
++----------+----------------------------+
+
+  Table 1: Policy Classification]]></artwork>
+                </figure></t>
+
+              <t>Peer Address: The remote IP address associated with the TCP
+              session over which the encapsulated PDU was received. It is 4
+              bytes long if an IPv4 address is carried in this field (with the
+              12 most significant bytes zero-filled) and 16 bytes long if an
+              IPv6 address is carried in this field.</t>
+
+              <t>Peer Router ID (4 Bytes): indicates the BGP Router ID where
+              this policy is configured under. This field is used in
+              combination with the Policy Classification field. If the Policy
+              Classification field is set to "00000000", meaning Inbound
+              policy, then this field is set to the BGP router ID where the
+              route is received from; if the Policy Classification field is
+              set to "00000001", meaning Outbound policy, then this field is
+              set to the BGP router ID where the route is distributed to; If
+              the Policy Direction field is set to any other values, then this
+              field is set to all zeros.</t>
+
+              <t>Peer AS (4 Bytes): indicates the AS number of the BGP Peer
+              that defined the Peer ID field.</t>
+
+              <t>1st ~ Last Policy (Variable): indicates the Policy name and
+              the Item ID of each policy match.</t>
+
+              <t>Flag Byte (1 Byte): the C bit (left most bit) indicates if
+              the next subsequent policy has chaining relationship to the
+              current policy. "1" means it's chaining relationship and "0"
+              means else wise. For the flag byte following the Last Policy
+              field, the C bit SHALL be set to "0". The R bit (second left
+              bit) indicates if the next subsequent policy has recursion to
+              the current policy. "1" means it's recursion and "0" means else
+              wise. For the flag byte following the Last Policy field, the R
+              bit SHALL be set to "0".</t>
+            </list><figure>
+              <artwork align="center"><![CDATA[0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-------------------------------+-------------------------------+
+|       Policy Name Length      |      Policy Item ID Length    |
++-------------------------------+-------------------------------+
+~                           Policy Name                         ~
++                                                               +
++---------------------------------------------------------------+
+~                         Policy Item ID                        ~
++                                                               +
++---------------------------------------------------------------+
+
+                Figure 5: Policy field format
+]]></artwork>
+            </figure></t>
+
+          <t>The Policy field consists of the Policy Name (Variable) and the
+          Policy Item ID (Variable). The Policy Name and Policy Item ID fields
+          are in the format of ASCII string. The length of Policy Name is
+          indicated by the Policy Name Length (2 Bytes) field. The length of
+          Policy Item ID is indicated by the Policy Item ID Length (2 Bytes)
+          field.</t>
+        </section>
+
+        <section title="Pre Policy Attribute TLV">
+          <t><figure align="center">
+              <artwork><![CDATA[0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-------------------------------+-------------------------------+
+|          Type = TBD3          |            Length             |
++-------------------------------+-------------------------------+
+~                  Pre Policy/Attribute sub TLVs                ~
++                                                               +
++---------------------------------------------------------------+
+
+                Figure 6: Pre Policy Attribute TLV]]></artwork>
+            </figure><list style="symbols">
+              <t>Type = TBD3 (2 Byte): Pre Policy Attribute TLV.</t>
+
+              <t>Pre Policy Attribute length (2 Byte): indicates the total
+              length of the following Pre Policy Attribute sub TLVs.</t>
+
+              <t>Pre Policy Attribute sub TLVs (Variable): include the BGP
+              route attributes before the policy is executed.</t>
+            </list></t>
+        </section>
+
+        <section title="Post Policy Attribute TLV">
+          <t><figure align="center">
+              <artwork><![CDATA[0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-------------------------------+-------------------------------+
+|          Type = TBD4          |            Length             |
++-------------------------------+-------------------------------+
+~                 Post Policy/Attribute sub TLVs                ~
++                                                               +
++---------------------------------------------------------------+
+
+                Figure 7: Post Policy Attribute TLV]]></artwork>
+            </figure></t>
+
+          <t><list style="symbols">
+              <t>Type = TBD4 (2 Byte): Post Policy Attribute TLV.</t>
+
+              <t>Pre Policy Attribute length (2 Byte): indicates the total
+              length of the following Pre Policy Attribute sub TLVs.</t>
+
+              <t>Pre Policy Attribute sub TLVs (Variable): include the BGP
+              route attributes before the policy is executed.</t>
+            </list></t>
+        </section>
+
+        <section title="String TLV">
+          <t><figure align="center">
+              <artwork><![CDATA[0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-------------------------------+-------------------------------+
+|          Type = TBD5          |            Length             |
++-------------------------------+-------------------------------+
+~                             Value                             ~
++                                                               +
++---------------------------------------------------------------+
+
+                    Figure 8: String TLV]]></artwork>
+            </figure></t>
+
+          <t><list style="symbols">
+              <t>Type = TBD5 (2 Byte): String TLV.</t>
+
+              <t>Length (2 Byte): indicates the length of the following value
+              field.</t>
+
+              <t>Value (Variable): the textual expression of user-specific
+              information in ASCII format.</t>
+            </list>One or more Optional String TLVs can be used. An example of
+          using the String TLV is expressing the route policy xpath
+          information instead of using the Policy TLV.</t>
+        </section>
+      </section>
+    </section>
+
+    <section title="Implementation Considerations">
+      <t>Considering the data amount of monitoring the route and policy trace
+      of all routes from all BMP clients, users MAY trigger the monitoring at
+      any user-specific time. Users MAY configure locally at the BMP client to
+      monitor only user-specific routes or all the routes. In addition, users
+      MAY configure locally at the BMP client whether to report the TLVs that
+      are optional according to their own requirements, i.e., the Pre Policy
+      Attribute TLV, Post Policy Attribute TLV, Policy ID TLV, and Optional
+      TLV.</t>
+
+      <t>Successive recored events from one device MAY be encapsulated in one
+      Route Policy and Attribute Trace Message or multiple Route Policy and
+      Attribute Trace Messages per the user configuration.</t>
+    </section>
+
+    <section title="Acknowledgments">
+      <t>TBD.</t>
+    </section>
+
+    <section anchor="IANA" title="IANA Considerations">
+      <t>This document defines the following new BMP Message type (Section
+      2.1).</t>
+
+      <t><list style="symbols">
+          <t>Type = TBD: Route Policy and Attribute Trace Message.</t>
+        </list>This document defines the following new TLV types for the Route
+      Policy and Attribute Trace Message (Section 2.3).</t>
+
+      <t><list style="symbols">
+          <t>Type = TBD1 (2 Byte): VRF/Table TLV.</t>
+
+          <t>Type = TBD2 (2 Byte): Policy TLV.</t>
+
+          <t>Type = TBD3 (2 Byte): Pre Policy Attribute TLV.</t>
+
+          <t>Type = TBD4 (2 Byte): Pre Policy Attribute TLV.</t>
+
+          <t>Type = TBD5 (2 Byte): String TLV.</t>
+        </list></t>
+    </section>
+
+    <section anchor="Security" title="Security Considerations">
+      <t>TBD.</t>
+    </section>
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      <?rfc include="reference.RFC.2119"?>
+
+      <?rfc include='reference.RFC.4271'?>
+
+      <?rfc include='reference.RFC.5492'?>
+
+      <?rfc include='reference.RFC.7854'?>
+
+      <?rfc include='reference.I-D.ietf-grow-bmp-local-rib'?>
+
+      <?rfc include='reference.I-D.ietf-grow-bmp-adj-rib-out'?>
+
+      <?rfc ?>
+    </references>
+  </back>
+</rfc>
