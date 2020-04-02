@@ -14,7 +14,7 @@ Expires: July 9, 2020                                           Swisscom
 
 
              BGP Route Policy and Attribute Trace Using BMP
-              draft-xu-grow-bmp-route-policy-attr-trace-04
+              draft-xu-grow-bmp-route-policy-attr-trace-05
 
 Abstract
 
@@ -22,11 +22,11 @@ Abstract
    BGP route exchange and route policy processing.  BGP Monitoring
    Protocol (BMP) provides the monitoring of BGP adj-rib-in [RFC7854],
    BGP local-rib [I-D.ietf-grow-bmp-local-rib] and BGP adj-rib-out
-   [I-D.ietf-grow-bmp-adj-rib-out].  By monitoring these BGP RIB's the
-   full state of the network is visible, but how route-policies affect
-   the route propagation or changes BGP attributes is still not.  This
-   document describes a method of using BMP to record the trace data on
-   how BGP routes are (not) changed under the process of route policies.
+   [RFC8671].  By monitoring these BGP RIBs the full state of the
+   network is visible, but how route policies affect the route
+   propagation or changes BGP attributes is still not.  This document
+   describes a method of using BMP to record the trace data on how BGP
+   routes are (not) changed under the process of route policies.
 
 Requirements Language
 
@@ -121,8 +121,8 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
    and so on, is currently unobserved.  For example, there are 10 policy
    items (or nodes) configured under one outbound route policy per a
    specific peer.  By collecting the local-rib and adj-rib-out through
-   BMP, the operator finds that the outbound policy didn't work as
-   expected.  However, it's hard to distinguish which one of the 10
+   BMP, the operator finds that the outbound policy did not work as
+   expected.  However, it is hard to distinguish which one of the 10
    policy items/nodes is responsible for the failure.
 
 1.1.  BGP Route Policy and Attribute Trace Overview
@@ -130,12 +130,12 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
    This document describes a method that records and reports how each
    policy item/node processes the routes (e.g., changes the route
    attribute).  Each policy item/node processing is called an event
-   thereafter in this document.  Compared with conventional BGP rib
+   thereafter in this document.  Compared with conventional BGP RIB
    entry, which consists of prefix/mask, route attributes, e.g., next
    hop, MED, local preference, AS path, and so on, the event record
-   discussed in this document includes extra information, such as event
-   index, timestamp, policy information, and so on.  For example, if a
-   route is processed by 5 policy items/nodes, there can be 5 event
+   discussed in this document includes different information, such as
+   event index, timestamp, policy information, and so on.  For example,
+   if a route is processed by 5 policy items/nodes, there can be 5 event
    records for the same prefix/mask.  Each event is numbered in order of
    time (e.g., the time of policy execution).  The policy information
    includes the policy name and item/node ID/name so that the server/
@@ -149,17 +149,17 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
 1.2.  Use cases
 
-   There are cases that a new policy is configured incorrectly, e.g.,
-   setting an incorrect community value, or policy placed in incorrect
-   order among other policies.  These may result in incorrect route
-   attribute modification, best route selection mistake, or route
+   There are cases where a new policy is configured incorrectly, e.g.,
+   setting an incorrect community value, or a policy being placed in an
+   incorrect order among other policies.  These may result in incorrect
+   route attribute modification, best route selection mistake, or route
    distribution mistake.  With the correlated record of policy and
    route, the server/controller is able to identify the unexpected route
    change and its responsible policy.  Considering the fact that the BGP
-   route policy impacts not only the route processing within the
-   individual device but also the route distribution to its peers, the
-   route trace data of a single device is always analyzed in correlation
-   with such data collected from its peer devices.
+   route policy impacts not only route processing within the individual
+   device but also route distribution to its peers, the route trace data
+   of a single device is always analyzed in correlation with such data
+   collected from its peer devices.
 
 
 
@@ -170,13 +170,13 @@ Xu, et al.                Expires July 9, 2020                  [Page 3]
 Internet-Draft        Route Policy-Attribute Trace          January 2020
 
 
-   Apart from the policy validation application, the route trace data
-   can also be analyzed to discover the route propagation path within
-   the network.  With the route's inbound and outbound event records
-   collect from each related device, the server is able to find the
-   propagation path hop by hop.  The identified path is helpful for
-   operators to better understand its network, and thus benefiting both
-   network troubleshooting and network planning.
+   Apart from the policy validation application, route trace data can
+   also be used to discover the route propagation path within the
+   network.  With records of route inbound and outbound events collected
+   from each related device, the server is able to find the propagation
+   path hop by hop.  The identified path is helpful for operators to
+   better understand its network, and thus benefiting both network
+   troubleshooting and network planning.
 
 2.  Extension of BMP for Route Policy and Attribute Trace
 
@@ -327,7 +327,7 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
                           Figure 2: Event format
 
-   o  Single event length (2 Byte): indicates the total length of a
+   o  Single event length (2 Bytes): indicates the total length of a
       single policy process event, including the following fields that
       belong to this event.
 
@@ -347,7 +347,7 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
       since midnight (zero hour), January 1, 1970 (UTC).
 
    o  Path Identifier (4 Bytes): used to distinguish multiple BGP paths
-      for the same prefix.  If there's no path ID, this field is zero
+      for the same prefix.  If there is no path ID, this field is zero
       filled.
 
    o  AFI (2 Bytes)/SAFI (1 Byte): indicates the AFI/SAFI of the route.
@@ -407,9 +407,10 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
                         Figure 3: VRF/Table TLV
 
-   o  Type = TBD1 (2 Byte): VRF/Table TLV.
+   o  Type = TBD1 (2 Bytes): VRF/Table TLV.
 
-   o  Length (2 Byte): indicates the length of the VRF/Table name field.
+   o  Length (2 Bytes): indicates the length of the VRF/Table name
+      field.
 
    o  VRF/Table ID (4 Bytes): indicates the VRF or table ID of this
       route.
@@ -419,7 +420,6 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
       within the range of 1 to 255 bytes.
 
 2.3.2.  Policy TLV
-
 
 
 
@@ -479,9 +479,9 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
                         Figure 4: Policy TLV
 
-   o  Type = TBD2 (2 Byte): Policy TLV.
+   o  Type = TBD2 (2 Bytes): Policy TLV.
 
-   o  Length (2 Byte): indicates the length of the Policy Value field
+   o  Length (2 Bytes): indicates the length of the Policy Value field
       that follows it.  The Policy value field includes the reserved
       Flag Byte, Policy Count field, Policy Classification field, Peer
       Router ID field, Peer AS field, and each Policy field.
@@ -551,8 +551,8 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
      Table 1: Policy Classification
 
-   o  Peer Address: The remote IP address associated with the TCP
-      session over which the encapsulated PDU was received.  It is 4
+   o  Peer Address (16 Bytes): The remote IP address associated with the
+      TCP session over which the encapsulated PDU was received.  It is 4
       bytes long if an IPv4 address is carried in this field (with the
 
 
@@ -584,11 +584,11 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
    o  Flag Byte (1 Byte): the C bit (left most bit) indicates if the
       next subsequent policy has chaining relationship to the current
-      policy. "1" means it's chaining relationship and "0" means else
+      policy. "1" means it is chaining relationship and "0" means else
       wise.  For the flag byte following the Last Policy field, the C
       bit SHALL be set to "0".  The R bit (second left bit) indicates if
       the next subsequent policy has recursion to the current policy.
-      "1" means it's recursion and "0" means else wise.  For the flag
+      "1" means it is recursion and "0" means else wise.  For the flag
       byte following the Last Policy field, the R bit SHALL be set to
       "0".
 
@@ -634,9 +634,9 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
                    Figure 6: Pre Policy Attribute TLV
 
-   o  Type = TBD3 (2 Byte): Pre Policy Attribute TLV.
+   o  Type = TBD3 (2 Bytes): Pre Policy Attribute TLV.
 
-   o  Pre Policy Attribute length (2 Byte): indicates the total length
+   o  Pre Policy Attribute length (2 Bytes): indicates the total length
       of the following Pre Policy Attribute sub TLVs.
 
    o  Pre Policy Attribute sub TLVs (Variable): include the BGP route
@@ -655,9 +655,9 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
                    Figure 7: Post Policy Attribute TLV
 
-   o  Type = TBD4 (2 Byte): Post Policy Attribute TLV.
+   o  Type = TBD4 (2 Bytes): Post Policy Attribute TLV.
 
-   o  Pre Policy Attribute length (2 Byte): indicates the total length
+   o  Pre Policy Attribute length (2 Bytes): indicates the total length
       of the following Pre Policy Attribute sub TLVs.
 
    o  Pre Policy Attribute sub TLVs (Variable): include the BGP route
@@ -687,9 +687,9 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
                        Figure 8: String TLV
 
-   o  Type = TBD5 (2 Byte): String TLV.
+   o  Type = TBD5 (2 Bytes): String TLV.
 
-   o  Length (2 Byte): indicates the length of the following value
+   o  Length (2 Bytes): indicates the length of the following value
       field.
 
    o  Value (Variable): the textual expression of user-specific
@@ -740,27 +740,21 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
    This document defines the following new TLV types for the Route
    Policy and Attribute Trace Message (Section 2.3).
 
-   o  Type = TBD1 (2 Byte): VRF/Table TLV.
+   o  Type = TBD1 (2 Bytes): VRF/Table TLV.
 
-   o  Type = TBD2 (2 Byte): Policy TLV.
+   o  Type = TBD2 (2 Bytes): Policy TLV.
 
-   o  Type = TBD3 (2 Byte): Pre Policy Attribute TLV.
+   o  Type = TBD3 (2 Bytes): Pre Policy Attribute TLV.
 
-   o  Type = TBD4 (2 Byte): Pre Policy Attribute TLV.
+   o  Type = TBD4 (2 Bytes): Pre Policy Attribute TLV.
 
-   o  Type = TBD5 (2 Byte): String TLV.
+   o  Type = TBD5 (2 Bytes): String TLV.
 
 6.  Security Considerations
 
    TBD.
 
 7.  Normative References
-
-   [I-D.ietf-grow-bmp-adj-rib-out]
-              Evens, T., Bayraktar, S., Lucente, P., Mi, K., and S.
-              Zhuang, "Support for Adj-RIB-Out in BGP Monitoring
-              Protocol (BMP)", draft-ietf-grow-bmp-adj-rib-out-07 (work
-              in progress), August 2019.
 
    [I-D.ietf-grow-bmp-local-rib]
               Evens, T., Bayraktar, S., Bhardwaj, M., and P. Lucente,
@@ -778,6 +772,12 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
               DOI 10.17487/RFC4271, January 2006,
               <https://www.rfc-editor.org/info/rfc4271>.
 
+   [RFC5492]  Scudder, J. and R. Chandra, "Capabilities Advertisement
+              with BGP-4", RFC 5492, DOI 10.17487/RFC5492, February
+              2009, <https://www.rfc-editor.org/info/rfc5492>.
+
+
+
 
 
 
@@ -786,14 +786,15 @@ Xu, et al.                Expires July 9, 2020                 [Page 14]
 Internet-Draft        Route Policy-Attribute Trace          January 2020
 
 
-   [RFC5492]  Scudder, J. and R. Chandra, "Capabilities Advertisement
-              with BGP-4", RFC 5492, DOI 10.17487/RFC5492, February
-              2009, <https://www.rfc-editor.org/info/rfc5492>.
-
    [RFC7854]  Scudder, J., Ed., Fernando, R., and S. Stuart, "BGP
               Monitoring Protocol (BMP)", RFC 7854,
               DOI 10.17487/RFC7854, June 2016,
               <https://www.rfc-editor.org/info/rfc7854>.
+
+   [RFC8671]  Evens, T., Bayraktar, S., Lucente, P., Mi, P., and S.
+              Zhuang, "Support for Adj-RIB-Out in the BGP Monitoring
+              Protocol (BMP)", RFC 8671, DOI 10.17487/RFC8671, November
+              2019, <https://www.rfc-editor.org/info/rfc8671>.
 
 Authors' Addresses
 
@@ -830,7 +831,6 @@ Authors' Addresses
    China
 
    Email: zhuangshunwan@huawei.com
-
 
 
 
