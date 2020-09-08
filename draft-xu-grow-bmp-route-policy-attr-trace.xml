@@ -351,10 +351,10 @@
             Figure 3. The VRF/Table TLV is optional.</t>
 
             <t>Policy TLV (Variable): indicates the ID of the route policy of
-            this event, which is user specific or vendor specific, which can
-            be used for mapping to the actual policy content. The policy
-            content data retrieval is out of the scope of this document. The
-            format of the Policy ID TLV is further defined in Figure 4. The
+            this event which can be used for mapping to the actual policy
+	    content. The policy ID is vendor and/or user specific and the
+	    policy content data retrieval is out of the scope of this document.
+	    The format of the Policy ID TLV is further defined in Figure 4. The
             Policy ID TLV is optional.</t>
 
             <t>Pre-policy Attribute TLV (Variable): include the BGP route
@@ -445,17 +445,17 @@
               field.</t>
 
               <t>Flag Byte (1 Byte): the M bit (the left most bit) indicates
-              if the route in this event is matched (once or multiple times)
-              or not by any policies. "0" means no match and "1" means else
-              wise. When the M bit is set to "0", the Post-Policy Attribute
+              whether the route in this event is matched (once or multiple times)
+              or not by any policies. "0" means no match and "1" means otherwise.
+              When the M bit is set to "0", the Post-Policy Attribute
               TLV SHALL not be included in the Message. The P bit (the second
-              left bit) indicates if the matched result is Permit or Deny. "0"
-              means Deny, and "1" means Permit. When the M bit is set to "0",
+              left bit) indicates whether the matched result is Permit or Deny.
+	      "0" means Deny and "1" means Permit. When the M bit is set to "0",
               any value of the P bit SHOULD be ignored. When the P bit is set
               to "0", the Post-Policy Attribute TLV SHALL not be included in
-              the Message. The D bit (the third left bit) indicates if there
+              the Message. The D bit (the third left bit) indicates whether there
               exists any difference between the pre-policy attributes and the
-              post policy attributes. "0" means no difference, and "1" means
+              post policy attributes. "0" means no difference and "1" means
               difference exists. When the D bit is set to "0", the Post-Policy
               Attribute TLV SHALL not be included in the Message.</t>
 
@@ -478,7 +478,7 @@
               "00001000" indicating the Route Withdraw (triggered by BGP
               Update or local actions, e.g., route aggregation).
               Specifications regarding each category can be included in the
-              String TLV. For the route update, i.e., route creation and
+              String TLV. For the route update, i.e. route creation and
               withdrawal, that is not processed by any route policy, the
               Policy Category field is set per the route update point. In
               addition, the Policy ID field in the Policy ID TLV SHOULD be set
@@ -515,7 +515,7 @@
               policy, then this field is set to the BGP router ID where the
               route is received from; if the Policy Classification field is
               set to "00000001", meaning Outbound policy, then this field is
-              set to the BGP router ID where the route is distributed to; If
+              set to the BGP router ID where the route is distributed to. If
               the Policy Direction field is set to any other values, then this
               field is set to all zeros.</t>
 
@@ -525,15 +525,15 @@
               <t>1st ~ Last Policy (Variable): indicates the Policy name and
               the Item ID of each policy match.</t>
 
-              <t>Flag Byte (1 Byte): the C bit (left most bit) indicates if
+              <t>Flag Byte (1 Byte): the C bit (left most bit) indicates whether 
               the next subsequent policy has chaining relationship to the
-              current policy. "1" means it is chaining relationship and "0"
-              means else wise. For the flag byte following the Last Policy
+              current policy. "1" means there is chaining relationship and "0"
+              means otherwise. For the flag byte following the Last Policy
               field, the C bit SHALL be set to "0". The R bit (second left
-              bit) indicates if the next subsequent policy has recursion to
-              the current policy. "1" means it is recursion and "0" means else
-              wise. For the flag byte following the Last Policy field, the R
-              bit SHALL be set to "0".</t>
+              bit) indicates whether the next subsequent policy has recursion to
+              the current policy. "1" means it has recursion and "0" means
+              otherwise. For the flag byte following the Last Policy field,
+	      the R bit SHALL be set to "0".</t>
             </list><figure>
               <artwork align="center"><![CDATA[0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -553,7 +553,7 @@
 
           <t>The Policy field consists of the Policy Name (Variable) and the
           Policy Item ID (Variable). The Policy Name and Policy Item ID fields
-          are in the format of ASCII string. The length of Policy Name is
+          are in the format of ASCII strings. The length of Policy Name is
           indicated by the Policy Name Length (2 Bytes) field. The length of
           Policy Item ID is indicated by the Policy Item ID Length (2 Bytes)
           field.</t>
