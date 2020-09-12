@@ -525,15 +525,15 @@
               <t>1st ~ Last Policy (Variable): indicates the Policy name and
               the Item ID of each policy match.</t>
 
-              <t>Flag Byte (1 Byte): the C bit (left most bit) indicates whether 
-              the next subsequent policy has chaining relationship to the
-              current policy. "1" means there is chaining relationship and "0"
-              means otherwise. For the flag byte following the Last Policy
-              field, the C bit SHALL be set to "0". The R bit (second left
-              bit) indicates whether the next subsequent policy has recursion to
-              the current policy. "1" means it has recursion and "0" means
-              otherwise. For the flag byte following the Last Policy field,
-	      the R bit SHALL be set to "0".</t>
+              <t>Next Policy Flag Byte (1 Byte): the C bit (left most bit)
+	      indicates whether the next subsequent policy has chaining
+	      relationship to the current policy. "1" means there is chaining
+	      relationship and "0" means otherwise. For the flag byte
+	      following the Last Policy field, the C bit SHALL be set to "0".
+	      The R bit (second left bit) indicates whether the next subsequent
+	      policy has recursion to the current policy. "1" means it has
+	      recursion and "0" means otherwise. For the flag byte following
+	      the Last Policy field, the R bit SHALL be set to "0".</t>
             </list><figure>
               <artwork align="center"><![CDATA[0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -551,12 +551,17 @@
 ]]></artwork>
             </figure></t>
 
-          <t>The Policy field consists of the Policy Name (Variable) and the
-          Policy Item ID (Variable). The Policy Name and Policy Item ID fields
-          are in the format of ASCII strings. The length of Policy Name is
-          indicated by the Policy Name Length (2 Bytes) field. The length of
-          Policy Item ID is indicated by the Policy Item ID Length (2 Bytes)
-          field.</t>
+          <t>The Policy field consists of:
+	     <list style="symbols">
+	     <t>Policy Name Length (2 bytes): the length of the policy name</t>
+
+	     <t>Policy Item ID Length (2 bytes): the length of the policy item ID</t>
+
+	     <t>Policy Name (variable): ASCII string representing the policy name</t>
+
+	     <t>Policy Item ID (variable): ASCII string representing the policy item ID</t>
+	     </list>
+	  </t>
         </section>
 
         <section title="Pre-Policy Attribute TLV">
