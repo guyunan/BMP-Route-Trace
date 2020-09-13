@@ -514,46 +514,46 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
       format of Policy name + Item ID) carried in this event.
 
    o  Policy Classification (1 Byte): indicates the category of the
-      policy.  Currently 8 policy categories are defined: "00000000"
-      indicates the Inbound policy; "00000001" indicates the Outbound
-      policy; "00000010" indicating the Multi-protocol Redistribute
-      policy (including routes import from other protocols, like ISIS/
-      OSPF and static routes), "00000011" indicates the Cross-VRF
-      Redistribute policy (route import between VRF and global table and
-      between VRFs); "00000100" indicates VRF Import policy (e.g., an
-      IPv4 route within a VRF transformed from a VPNv4 route),
-      "00000101" indicates VRF Export policy (e.g., a VPNv4 route
-      transformed from an IPv4 route within an VRF); "00000110"
-      indicates the Network policy (BGP network installment and
-      advertisement), "00000111" indicates the Aggregation policy;
-      "00001000" indicating the Route Withdraw (triggered by BGP Update
-      or local actions, e.g., route aggregation).  Specifications
+      policy.  Currently 8 policy categories are defined: "0x00"
+      indicates the Inbound policy; "0x01" indicates the Outbound
+      policy; "0x02" indicating the Multi-protocol Redistribute policy
+      (including routes import from other protocols, like ISIS/OSPF and
+      static routes), "0x03" indicates the Cross-VRF Redistribute policy
+      (route import between VRF and global table and between VRFs);
+      "0x04" indicates VRF Import policy (e.g., an IPv4 route within a
+      VRF transformed from a VPNv4 route), "0x05" indicates VRF Export
+      policy (e.g., a VPNv4 route transformed from an IPv4 route within
+      an VRF); "0x06" indicates the Network policy (BGP network
+      installment and advertisement), "0x07" indicates the Aggregation
+      policy; "0x08" indicating the Route Withdraw (triggered by BGP
+      Update or local actions, e.g., route aggregation).  Specifications
       regarding each category can be included in the String TLV.  For
       the route update, i.e. route creation and withdrawal, that is not
       processed by any route policy, the Policy Category field is set
       per the route update point.  In addition, the Policy ID field in
       the Policy ID TLV SHOULD be set to 0.
 
-   o
-
    +---------------------------------------+
    |   Value  |Policy Classification       |
    +---------------------------------------+
-   | 00000000 | Inbound policy             |
-   | 00000001 | Outbound policy            |
-   | 00000010 | Multi-protocol Redistribute|
-   | 00000011 | Cross-VRF Redistribute     |
-   | 00000100 | VRF import                 |
-     00000101 | VRF export                 |
-   | 00000110 | Network                    |
-   | 00000111 | Aggregation                |
-   | 00001000 | Route Withdraw             |
+   |     0x00 | Inbound policy             |
+   |     0x01 | Outbound policy            |
+   |     0x02 | Multi-protocol Redistribute|
+   |     0x03 | Cross-VRF Redistribute     |
+   |     0x04 | VRF import                 |
+   |     0x05 | VRF export                 |
+   |     0x06 | Network                    |
+   |     0x07 | Aggregation                |
+   |     0x08 | Route Withdraw             |
    +----------+----------------------------+
 
      Table 1: Policy Classification
 
    o  Peer Address (16 Bytes): The remote IP address associated with the
       TCP session over which the encapsulated PDU was received.  It is 4
+      bytes long if an IPv4 address is carried in this field (with the
+      12 most significant bytes zero-filled) and 16 bytes long if an
+      IPv6 address is carried in this field.
 
 
 
@@ -561,10 +561,6 @@ Xu, et al.                Expires July 9, 2020                 [Page 10]
 
 Internet-Draft        Route Policy-Attribute Trace          January 2020
 
-
-      bytes long if an IPv4 address is carried in this field (with the
-      12 most significant bytes zero-filled) and 16 bytes long if an
-      IPv6 address is carried in this field.
 
    o  Peer Router ID (4 Bytes): indicates the BGP Router ID where this
       policy is configured under.  This field is used in combination
@@ -611,16 +607,16 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
    o  Policy Name Length (2 bytes): the length of the policy name
 
+   o  Policy Item ID Length (2 bytes): the length of the policy item ID
+
+   o  Policy Name (variable): ASCII string representing the policy name
+
 
 
 Xu, et al.                Expires July 9, 2020                 [Page 11]
 
 Internet-Draft        Route Policy-Attribute Trace          January 2020
 
-
-   o  Policy Item ID Length (2 bytes): the length of the policy item ID
-
-   o  Policy Name (variable): ASCII string representing the policy name
 
    o  Policy Item ID (variable): ASCII string representing the policy
       item ID
@@ -666,6 +662,10 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
    o  Post-Policy Attribute sub TLVs (Variable): include the BGP route
       attributes after the policy is executed.
+
+
+
+
 
 
 
