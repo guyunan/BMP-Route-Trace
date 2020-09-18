@@ -483,21 +483,21 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
    o  Length (2 Bytes): indicates the length of the Policy Value field
       that follows it.  The Policy value field includes the reserved
-      Flag Byte, Policy Count field, Policy Classification field, Peer
+      Flags, Policy Count field, Policy Classification field, Peer
       Router ID field, Peer AS field, and each Policy field.
 
-   o  Flag Byte (1 Byte): the M bit (the left most bit) indicates
-      whether the route in this event is matched (once or multiple
-      times) or not by any policies. "0" means no match and "1" means
-      otherwise.  When the M bit is set to "0", the Post-Policy
-      Attribute TLV SHALL not be included in the Message.  The P bit
-      (the second left bit) indicates whether the matched result is
-      Permit or Deny.  "0" means Deny and "1" means Permit.  When the M
-      bit is set to "0", any value of the P bit SHOULD be ignored.  When
-      the P bit is set to "0", the Post-Policy Attribute TLV SHALL not
-      be included in the Message.  The D bit (the third left bit)
-      indicates whether there exists any difference between the pre-
-      policy attributes and the post policy attributes. "0" means no
+   o  Flags (1 Byte): the M bit (the left most bit) indicates whether
+      the route in this event is matched (once or multiple times) or not
+      by any policies. "0" means no match and "1" means otherwise.  When
+      the M bit is set to "0", the Post-Policy Attribute TLV SHALL not
+      be included in the Message.  The P bit (the second left bit)
+      indicates whether the matched result is Permit or Deny.  "0" means
+      Deny and "1" means Permit.  When the M bit is set to "0", any
+      value of the P bit SHOULD be ignored.  When the P bit is set to
+      "0", the Post-Policy Attribute TLV SHALL not be included in the
+      Message.  The D bit (the third left bit) indicates whether there
+      exists any difference between the pre-policy attributes and the
+      post policy attributes. "0" means no difference and "1" means
 
 
 
@@ -506,9 +506,8 @@ Xu, et al.                Expires July 9, 2020                  [Page 9]
 Internet-Draft        Route Policy-Attribute Trace          January 2020
 
 
-      difference and "1" means difference exists.  When the D bit is set
-      to "0", the Post-Policy Attribute TLV SHALL not be included in the
-      Message.
+      difference exists.  When the D bit is set to "0", the Post-Policy
+      Attribute TLV SHALL not be included in the Message.
 
    o  Policy Count (1 Byte): indicates the number of policies (in the
       format of Policy name + Item ID) carried in this event.
@@ -553,7 +552,8 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
       TCP session over which the encapsulated PDU was received.  It is 4
       bytes long if an IPv4 address is carried in this field (with the
       12 most significant bytes zero-filled) and 16 bytes long if an
-      IPv6 address is carried in this field.
+      IPv6 address is carried in this field.  Whether the encoded IP
+
 
 
 
@@ -561,6 +561,9 @@ Xu, et al.                Expires July 9, 2020                 [Page 10]
 
 Internet-Draft        Route Policy-Attribute Trace          January 2020
 
+
+      address is IPv4 or IPv6, it can be determined basing on the V flag
+      of the Route Policy and Attribute Trace Message
 
    o  Peer Router ID (4 Bytes): indicates the BGP Router ID where this
       policy is configured under.  This field is used in combination
@@ -579,15 +582,15 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
    o  1st ~ Last Policy (Variable): indicates the Policy name and the
       Item ID of each policy match.
 
-   o  Next Policy Flag Byte (1 Byte): the C bit (left most bit)
-      indicates whether the next subsequent policy has chaining
-      relationship to the current policy. "1" means there is chaining
-      relationship and "0" means otherwise.  For the flag byte following
-      the Last Policy field, the C bit SHALL be set to "0".  The R bit
-      (second left bit) indicates whether the next subsequent policy has
-      recursion to the current policy. "1" means it has recursion and
+   o  Next Policy Flags (1 Byte): the C bit (left most bit) indicates
+      whether the next subsequent policy has chaining relationship to
+      the current policy. "1" means there is chaining relationship and
       "0" means otherwise.  For the flag byte following the Last Policy
-      field, the R bit SHALL be set to "0".
+      field, the C bit SHALL be set to "0".  The R bit (second left bit)
+      indicates whether the next subsequent policy has recursion to the
+      current policy. "1" means it has recursion and "0" means
+      otherwise.  For the flag byte following the Last Policy field, the
+      R bit SHALL be set to "0".
 
      0                   1                   2                   3
      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -607,9 +610,6 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
    o  Policy Name Length (2 bytes): the length of the policy name
 
-   o  Policy Item ID Length (2 bytes): the length of the policy item ID
-
-   o  Policy Name (variable): ASCII string representing the policy name
 
 
 
@@ -617,6 +617,10 @@ Xu, et al.                Expires July 9, 2020                 [Page 11]
 
 Internet-Draft        Route Policy-Attribute Trace          January 2020
 
+
+   o  Policy Item ID Length (2 bytes): the length of the policy item ID
+
+   o  Policy Name (variable): ASCII string representing the policy name
 
    o  Policy Item ID (variable): ASCII string representing the policy
       item ID
@@ -662,10 +666,6 @@ Internet-Draft        Route Policy-Attribute Trace          January 2020
 
    o  Post-Policy Attribute sub TLVs (Variable): include the BGP route
       attributes after the policy is executed.
-
-
-
-
 
 
 

@@ -440,11 +440,11 @@
 
               <t>Length (2 Bytes): indicates the length of the Policy Value
               field that follows it. The Policy value field includes the
-              reserved Flag Byte, Policy Count field, Policy Classification
+              reserved Flags, Policy Count field, Policy Classification
               field, Peer Router ID field, Peer AS field, and each Policy
               field.</t>
 
-              <t>Flag Byte (1 Byte): the M bit (the left most bit) indicates
+              <t>Flags (1 Byte): the M bit (the left most bit) indicates
               whether the route in this event is matched (once or multiple times)
               or not by any policies. "0" means no match and "1" means otherwise.
               When the M bit is set to "0", the Post-Policy Attribute
@@ -505,7 +505,9 @@
 	      with the TCP session over which the encapsulated PDU was received.
 	      It is 4 bytes long if an IPv4 address is carried in this field
 	      (with the 12 most significant bytes zero-filled) and 16 bytes
-	      long if an IPv6 address is carried in this field.</t>
+	      long if an IPv6 address is carried in this field. Whether the
+	      encoded IP address is IPv4 or IPv6, it can be determined basing
+	      on the V flag of the Route Policy and Attribute Trace Message</t>
 
               <t>Peer Router ID (4 Bytes): indicates the BGP Router ID where
               this policy is configured under. This field is used in
@@ -524,7 +526,7 @@
               <t>1st ~ Last Policy (Variable): indicates the Policy name and
               the Item ID of each policy match.</t>
 
-              <t>Next Policy Flag Byte (1 Byte): the C bit (left most bit)
+              <t>Next Policy Flags (1 Byte): the C bit (left most bit)
 	      indicates whether the next subsequent policy has chaining
 	      relationship to the current policy. "1" means there is chaining
 	      relationship and "0" means otherwise. For the flag byte
